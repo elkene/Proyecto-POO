@@ -137,7 +137,7 @@ public class AventuraDelTesoroGUI extends JFrame {
     public class SeleccionJugadorFrame extends JFrame {
         public SeleccionJugadorFrame() {
             setTitle("Seleccionar Jugador");
-            setSize(400, 300);
+            setSize(800, 600);
             setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
             // Crear un JLabel para el GIF de fondo
