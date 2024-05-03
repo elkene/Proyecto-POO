@@ -1,6 +1,7 @@
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -8,8 +9,11 @@ public class AventuraDelTesoroGUI extends JFrame {
 
     private List<String> jugadores = new ArrayList<>();
     private String nombreJugadorSeleccionado;
+    private String archivoJugadores = "jugadores.txt";
 
     public AventuraDelTesoroGUI() {
+        cargarJugadores();
+
         setTitle("Aventura del Tesoro");
         setSize(800, 600);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -79,6 +83,7 @@ public class AventuraDelTesoroGUI extends JFrame {
                 if (nombreJugador != null && !nombreJugador.isEmpty()) {
                     jugadores.add(nombreJugador);
                     JOptionPane.showMessageDialog(AventuraDelTesoroGUI.this, "Jugador creado: " + nombreJugador);
+                    guardarJugadores();
                 } else {
                     JOptionPane.showMessageDialog(AventuraDelTesoroGUI.this, "Nombre de jugador inválido. Inténtalo de nuevo.");
                 }
@@ -97,6 +102,7 @@ public class AventuraDelTesoroGUI extends JFrame {
         btnSalir.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                guardarJugadores();
                 System.exit(0);
             }
         });
@@ -104,6 +110,28 @@ public class AventuraDelTesoroGUI extends JFrame {
         add(btnSalir, gbc);
 
         setFocusable(true);
+    }
+
+    private void cargarJugadores() {
+        try (BufferedReader br = new BufferedReader(new FileReader(archivoJugadores))) {
+            String jugador;
+            while ((jugador = br.readLine()) != null) {
+                jugadores.add(jugador);
+            }
+        } catch (IOException e) {
+            System.err.println("Error al cargar jugadores: " + e.getMessage());
+        }
+    }
+
+    private void guardarJugadores() {
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter(archivoJugadores))) {
+            for (String jugador : jugadores) {
+                bw.write(jugador);
+                bw.newLine();
+            }
+        } catch (IOException e) {
+            System.err.println("Error al guardar jugadores: " + e.getMessage());
+        }
     }
 
     public class SeleccionJugadorFrame extends JFrame {
