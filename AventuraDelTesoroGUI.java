@@ -4,6 +4,8 @@ import java.awt.event.*;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
+import java.util.Stack;
 
 public class AventuraDelTesoroGUI extends JFrame {
     private List<String> jugadores = new ArrayList<>();
@@ -16,6 +18,12 @@ public class AventuraDelTesoroGUI extends JFrame {
     private JLabel lblTemporizador;
     private Timer timer;
     private JLabel lblArriba, lblAbajo, lblIzquierda, lblDerecha;
+    private Laberinto laberinto;
+    private int playerX, playerY;
+    private final int cellSize = 40; // Tamaño de cada celda en el laberinto
+    private final int numRows = 10;  // Número de filas en el laberinto
+    private final int numCols = 10;  // Número de columnas en el laberinto
+    private boolean[] movement = new boolean[4]; // Up, Down, Left, Right
 
     public AventuraDelTesoroGUI() {
         cargarJugadores();
@@ -27,9 +35,16 @@ public class AventuraDelTesoroGUI extends JFrame {
         cardLayout = new CardLayout();
         panelPrincipal = new JPanel(cardLayout);
 
-        // Crear el menú principal
-        panelMenu = new JPanel();
-        panelMenu.setLayout(new GridBagLayout());
+        // Crear el menú principal con GIF de fondo
+        panelMenu = new JPanel(new GridBagLayout()) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                ImageIcon fondo = new ImageIcon("fondo3.gif");
+                g.drawImage(fondo.getImage(), 0, 0, getWidth(), getHeight(), this);
+            }
+        };
+
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(10, 10, 10, 10);
         gbc.gridx = 0;
@@ -120,9 +135,8 @@ public class AventuraDelTesoroGUI extends JFrame {
         panelJuego = new JPanel(new BorderLayout());
 
         // Panel para mostrar el mapa
-        JPanel panelMapa = new JPanel();
-        panelMapa.setBackground(Color.WHITE);
-        panelJuego.add(panelMapa, BorderLayout.CENTER);
+        laberinto = new Laberinto(numRows, numCols, cellSize);
+        panelJuego.add(laberinto, BorderLayout.CENTER);
 
         // Temporizador
         lblTemporizador = new JLabel("Tiempo restante: 60 segundos");
@@ -177,22 +191,22 @@ public class AventuraDelTesoroGUI extends JFrame {
             }
         });
 
-        // Escuchar eventos del teclado
+        // Escuchar eventos del teclado para movimiento continuo
         panelJuego.addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
                 switch (e.getKeyCode()) {
                     case KeyEvent.VK_UP:
-                        lblArriba.setForeground(Color.GREEN);
+                        movement[0] = true;
                         break;
                     case KeyEvent.VK_DOWN:
-                        lblAbajo.setForeground(Color.GREEN);
+                        movement[1] = true;
                         break;
                     case KeyEvent.VK_LEFT:
-                        lblIzquierda.setForeground(Color.GREEN);
+                        movement[2] = true;
                         break;
                     case KeyEvent.VK_RIGHT:
-                        lblDerecha.setForeground(Color.GREEN);
+                        movement[3] = true;
                         break;
                 }
             }
@@ -201,20 +215,29 @@ public class AventuraDelTesoroGUI extends JFrame {
             public void keyReleased(KeyEvent e) {
                 switch (e.getKeyCode()) {
                     case KeyEvent.VK_UP:
-                        lblArriba.setForeground(Color.BLACK);
+                        movement[0] = false;
                         break;
                     case KeyEvent.VK_DOWN:
-                        lblAbajo.setForeground(Color.BLACK);
+                        movement[1] = false;
                         break;
                     case KeyEvent.VK_LEFT:
-                        lblIzquierda.setForeground(Color.BLACK);
+                        movement[2] = false;
                         break;
                     case KeyEvent.VK_RIGHT:
-                        lblDerecha.setForeground(Color.BLACK);
+                        movement[3] = false;
                         break;
                 }
             }
         });
+
+        // Temporizador para mover al jugador
+        Timer movimientoTimer = new Timer(30, new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                moverJugador();
+            }
+        });
+        movimientoTimer.start();
 
         panelJuego.setFocusable(true);
 
@@ -225,6 +248,10 @@ public class AventuraDelTesoroGUI extends JFrame {
         add(panelPrincipal);
 
         setFocusable(true);
+
+        // Inicializar posición del jugador
+        playerX = 0;
+        playerY = 0;
     }
 
     private void cargarJugadores() {
@@ -256,7 +283,7 @@ public class AventuraDelTesoroGUI extends JFrame {
             setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
             // Crear un JLabel para el GIF de fondo
-            JLabel background = new JLabel(new ImageIcon("C:\\Users\\Kenne\\Documents\\POO\\Proyecto-POO-master\\fondoo.gif"));
+            JLabel background = new JLabel(new ImageIcon("fondoo.gif"));
             setContentPane(background);
             setLayout(new GridBagLayout());
             GridBagConstraints gbc = new GridBagConstraints();
@@ -304,6 +331,120 @@ public class AventuraDelTesoroGUI extends JFrame {
             timer.start();
             panelJuego.requestFocusInWindow();
             dispose(); // Cierra la ventana de selección de jugador
+        }
+    }
+
+    // Clase para generar y pintar el laberinto
+    class Laberinto extends JPanel {
+        private int[][] grid;
+        private int cellSize;
+        private int rows, cols;
+        private Point start, end;
+
+        public Laberinto(int rows, int cols, int cellSize) {
+            this.rows = rows;
+            this.cols = cols;
+            this.cellSize = cellSize;
+            this.grid = new int[rows][cols];
+            generarLaberinto();
+        }
+
+        private void generarLaberinto() {
+            // Inicializar el laberinto con paredes
+            for (int i = 0; i < rows; i++) {
+                for (int j = 0; j < cols; j++) {
+                    grid[i][j] = 1;
+                }
+            }
+
+            // Crear el laberinto usando DFS
+            Stack<Point> stack = new Stack<>();
+            start = new Point(0, 0);
+            end = new Point(rows - 1, cols - 1);
+            stack.push(start);
+
+            Random random = new Random();
+
+            while (!stack.isEmpty()) {
+                Point current = stack.pop();
+                int x = current.x;
+                int y = current.y;
+
+                // Marcar el punto actual como camino
+                grid[x][y] = 0;
+
+                // Crear una lista de vecinos no visitados
+                List<Point> neighbors = new ArrayList<>();
+                if (x > 1 && grid[x - 2][y] == 1) neighbors.add(new Point(x - 2, y));
+                if (x < rows - 2 && grid[x + 2][y] == 1) neighbors.add(new Point(x + 2, y));
+                if (y > 1 && grid[x][y - 2] == 1) neighbors.add(new Point(x, y - 2));
+                if (y < cols - 2 && grid[x][y + 2] == 1) neighbors.add(new Point(x, y + 2));
+
+                // Mezclar los vecinos y agregar los caminos
+                while (!neighbors.isEmpty()) {
+                    int index = random.nextInt(neighbors.size());
+                    Point neighbor = neighbors.remove(index);
+                    int nx = neighbor.x;
+                    int ny = neighbor.y;
+
+                    if (grid[nx][ny] == 1) {
+                        // Crear un camino entre el punto actual y el vecino
+                        grid[nx][ny] = 0;
+                        grid[(x + nx) / 2][(y + ny) / 2] = 0;
+                        stack.push(current);
+                        stack.push(neighbor);
+                    }
+                }
+            }
+
+            // Asegurar que la posición final sea un camino
+            grid[end.x][end.y] = 0;
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            for (int i = 0; i < rows; i++) {
+                for (int j = 0; j < cols; j++) {
+                    if (grid[i][j] == 1) {
+                        g.setColor(Color.BLUE);
+                        g.fillRect(j * cellSize, i * cellSize, cellSize, cellSize);
+                    }
+                }
+            }
+            // Dibujar el jugador
+            g.setColor(Color.RED);
+            g.fillRect(playerX, playerY, cellSize, cellSize);
+
+            // Dibujar la posición final
+            g.setColor(Color.GREEN);
+            g.fillRect(end.y * cellSize, end.x * cellSize, cellSize, cellSize);
+        }
+
+        public boolean isWalkable(int x, int y) {
+            int gridX = x / cellSize;
+            int gridY = y / cellSize;
+            return gridX >= 0 && gridX < cols && gridY >= 0 && gridY < rows && grid[gridY][gridX] == 0;
+        }
+
+        @Override
+        public Dimension getPreferredSize() {
+            return new Dimension(cols * cellSize, rows * cellSize);
+        }
+    }
+
+    private void moverJugador() {
+        int step = 5; // Tamaño del paso para el movimiento continuo
+        if (movement[0] && laberinto.isWalkable(playerX, playerY - step)) playerY -= step; // Up
+        if (movement[1] && laberinto.isWalkable(playerX, playerY + step)) playerY += step; // Down
+        if (movement[2] && laberinto.isWalkable(playerX - step, playerY)) playerX -= step; // Left
+        if (movement[3] && laberinto.isWalkable(playerX + step, playerY)) playerX += step; // Right
+        laberinto.repaint();
+
+        // Verificar si el jugador ha llegado al final
+        if (playerX / cellSize == laberinto.end.y && playerY / cellSize == laberinto.end.x) {
+            timer.stop();
+            JOptionPane.showMessageDialog(AventuraDelTesoroGUI.this, "¡Felicidades! Has encontrado el tesoro.");
         }
     }
 
