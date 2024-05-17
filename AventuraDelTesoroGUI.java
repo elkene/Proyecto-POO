@@ -432,21 +432,48 @@ public class AventuraDelTesoroGUI extends JFrame {
             return new Dimension(cols * cellSize, rows * cellSize);
         }
     }
-
     private void moverJugador() {
         int step = 5; // Tamaño del paso para el movimiento continuo
-        if (movement[0] && laberinto.isWalkable(playerX, playerY - step)) playerY -= step; // Up
-        if (movement[1] && laberinto.isWalkable(playerX, playerY + step)) playerY += step; // Down
-        if (movement[2] && laberinto.isWalkable(playerX - step, playerY)) playerX -= step; // Left
-        if (movement[3] && laberinto.isWalkable(playerX + step, playerY)) playerX += step; // Right
+    
+        // Calcular las nuevas coordenadas del jugador
+        int newX = playerX;
+        int newY = playerY;
+        if (movement[0]) { // Arriba
+            newY -= step;
+        }
+        if (movement[1]) { // Abajo
+            newY += step;
+        }
+        if (movement[2]) { // Izquierda
+            newX -= step;
+        }
+        if (movement[3]) { // Derecha
+            newX += step;
+        }
+    
+        // Verificar si el nuevo destino del jugador estaría dentro de una pared del laberinto
+        boolean collision = false;
+        if (!laberinto.isWalkable(newX, newY) || !laberinto.isWalkable(newX + cellSize - 1, newY) ||
+            !laberinto.isWalkable(newX, newY + cellSize - 1) || !laberinto.isWalkable(newX + cellSize - 1, newY + cellSize - 1)) {
+            collision = true;
+        }
+    
+        // Solo actualizar las coordenadas del jugador si no hay colisión
+        if (!collision) {
+            playerX = newX;
+            playerY = newY;
+        }
+    
         laberinto.repaint();
-
+    
         // Verificar si el jugador ha llegado al final
         if (playerX / cellSize == laberinto.end.y && playerY / cellSize == laberinto.end.x) {
             timer.stop();
             JOptionPane.showMessageDialog(AventuraDelTesoroGUI.this, "¡Felicidades! Has encontrado el tesoro.");
         }
     }
+    
+    
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
