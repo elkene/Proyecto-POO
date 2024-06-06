@@ -392,6 +392,8 @@ panelJuego.addKeyListener(new KeyAdapter() {
         private Point start, end;
         private int rowIncrement = 2; // Incremento de filas por nivel
         private int colIncrement = 2; // Incremento de columnas por nivel
+        private final int MAX_ROWS = 18;
+         private final int MAX_COLS = 18;
     
         public Laberinto(int initialRows, int initialCols, int cellSize) {
             this.initialRows = initialRows;
@@ -489,14 +491,28 @@ panelJuego.addKeyListener(new KeyAdapter() {
         }
     
         public void expand() {
+                // Verificar si ya se alcanzó el tamaño máximo en filas y columnas
+            if (rows >= MAX_ROWS || cols >= MAX_COLS) {
+                // No expandir más allá del tamaño máximo
+                return;
+            }
+
             // Incrementar el número de filas y columnas
             rows += rowIncrement;
             cols += colIncrement;
-    
+
+            // Verificar si se ha superado el tamaño máximo
+            if (rows > MAX_ROWS) {
+                rows = MAX_ROWS;
+            }
+            if (cols > MAX_COLS) {
+                cols = MAX_COLS;
+            }
+
             // Crear un nuevo laberinto con el nuevo tamaño
             grid = new int[rows][cols];
             generarLaberinto();
-    
+
             // Actualizar la interfaz gráfica
             revalidate();
             repaint();
