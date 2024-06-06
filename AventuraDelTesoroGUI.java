@@ -148,19 +148,28 @@ public class AventuraDelTesoroGUI extends JFrame {
         lblIzquierda = new JLabel("←");
         lblDerecha = new JLabel("→");
 
-        Font flechaFont = new Font("Arial", Font.PLAIN, 40); // Cambiar el tamaño de la fuente
+        Font flechaFont = new Font("Arial", Font.PLAIN, 20); // Cambiar el tamaño de la fuente
         lblArriba.setFont(flechaFont);
         lblAbajo.setFont(flechaFont);
         lblIzquierda.setFont(flechaFont);
         lblDerecha.setFont(flechaFont);
+
+        // Establecer el fondo de las flechas como transparente
+        lblArriba.setOpaque(true);
+        lblAbajo.setOpaque(true);
+        lblIzquierda.setOpaque(true);
+        lblDerecha.setOpaque(true);
 
         // Centrar las etiquetas de flechas horizontalmente
         lblArriba.setHorizontalAlignment(SwingConstants.CENTER);
         lblAbajo.setHorizontalAlignment(SwingConstants.CENTER);
         lblIzquierda.setHorizontalAlignment(SwingConstants.CENTER);
         lblDerecha.setHorizontalAlignment(SwingConstants.CENTER);
-
-       
+        lblArriba.setForeground(Color.BLACK);
+        lblAbajo.setForeground(Color.BLACK);
+        lblIzquierda.setForeground(Color.BLACK);
+        lblDerecha.setForeground(Color.BLACK);
+        
         JPanel panelIndicadores = new JPanel();
         panelIndicadores.setLayout(new GridLayout(3, 3));
         panelIndicadores.add(new JPanel()); // Celda vacía
@@ -174,6 +183,44 @@ public class AventuraDelTesoroGUI extends JFrame {
         panelIndicadores.add(new JPanel()); // Celda vacía
     
         panelJuego.add(panelIndicadores, BorderLayout.SOUTH);
+        // Agregar KeyListener para cambiar el color de las flechas
+panelJuego.addKeyListener(new KeyAdapter() {
+    @Override
+    public void keyPressed(KeyEvent e) {
+        switch (e.getKeyCode()) {
+            case KeyEvent.VK_UP:
+                lblArriba.setForeground(Color.GREEN); // Cambiar el color de la flecha hacia arriba
+                break;
+            case KeyEvent.VK_DOWN:
+                lblAbajo.setForeground(Color.GREEN); // Cambiar el color de la flecha hacia abajo
+                break;
+            case KeyEvent.VK_LEFT:
+                lblIzquierda.setForeground(Color.GREEN); // Cambiar el color de la flecha hacia la izquierda
+                break;
+            case KeyEvent.VK_RIGHT:
+                lblDerecha.setForeground(Color.GREEN); // Cambiar el color de la flecha hacia la derecha
+                break;
+        }
+    }
+
+    @Override
+    public void keyReleased(KeyEvent e) {
+        switch (e.getKeyCode()) {
+            case KeyEvent.VK_UP:
+                lblArriba.setForeground(Color.BLACK); // Restaurar el color original de la flecha hacia arriba
+                break;
+            case KeyEvent.VK_DOWN:
+                lblAbajo.setForeground(Color.BLACK); // Restaurar el color original de la flecha hacia abajo
+                break;
+            case KeyEvent.VK_LEFT:
+                lblIzquierda.setForeground(Color.BLACK); // Restaurar el color original de la flecha hacia la izquierda
+                break;
+            case KeyEvent.VK_RIGHT:
+                lblDerecha.setForeground(Color.BLACK); // Restaurar el color original de la flecha hacia la derecha
+                break;
+        }
+    }
+});
     
         // Configuración del temporizador
         int tiempoInicial = 300; // Tiempo inicial en segundos (5 minutos)
@@ -455,6 +502,7 @@ public class AventuraDelTesoroGUI extends JFrame {
             repaint();
         }
     }
+    
     private void moverJugador() {
         int step = 5; // Tamaño del paso para el movimiento continuo
     
@@ -507,6 +555,8 @@ public class AventuraDelTesoroGUI extends JFrame {
             panelJuego.repaint(); // Repaint the panel
         }
     }
+
+    
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             AventuraDelTesoroGUI juego = new AventuraDelTesoroGUI();
