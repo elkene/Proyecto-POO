@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.Stack;
 
+
 public class AventuraDelTesoroGUI extends JFrame {
     private List<String> jugadores = new ArrayList<>();
     private String nombreJugadorSeleccionado;
@@ -175,21 +176,21 @@ public class AventuraDelTesoroGUI extends JFrame {
         panelJuego.add(panelIndicadores, BorderLayout.SOUTH);
     
         // Configuración del temporizador
-        int tiempoInicial = 60; // Tiempo inicial en segundos
+        int tiempoInicial = 300; // Tiempo inicial en segundos (5 minutos)
         timer = new Timer(1000, new ActionListener() {
-            int tiempoRestante = tiempoInicial;
-    
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                tiempoRestante--;
-                if (tiempoRestante >= 0) {
-                    lblTemporizador.setText("Tiempo restante: " + tiempoRestante + " segundos");
-                } else {
-                    ((Timer) e.getSource()).stop(); // Detener el temporizador
-                    JOptionPane.showMessageDialog(AventuraDelTesoroGUI.this, "¡Tiempo agotado!");
-                }
+        int tiempoRestante = tiempoInicial;
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            tiempoRestante--;
+            if (tiempoRestante >= 0) {
+                lblTemporizador.setText("Tiempo restante: " + tiempoRestante + " segundos");
+            } else {
+                ((Timer) e.getSource()).stop(); // Detener el temporizador
+                JOptionPane.showMessageDialog(AventuraDelTesoroGUI.this, "¡Tiempo agotado!");
             }
-        });
+        }
+});
     
         // Escuchar eventos del teclado para movimiento continuo
         panelJuego.addKeyListener(new KeyAdapter() {
@@ -340,12 +341,17 @@ public class AventuraDelTesoroGUI extends JFrame {
         private int[][] grid;
         private int cellSize;
         private int rows, cols;
+        private int initialRows, initialCols;
         private Point start, end;
-
-        public Laberinto(int rows, int cols, int cellSize) {
-            this.rows = rows;
-            this.cols = cols;
+        private int rowIncrement = 2; // Incremento de filas por nivel
+        private int colIncrement = 2; // Incremento de columnas por nivel
+    
+        public Laberinto(int initialRows, int initialCols, int cellSize) {
+            this.initialRows = initialRows;
+            this.initialCols = initialCols;
             this.cellSize = cellSize;
+            this.rows = initialRows;
+            this.cols = initialCols;
             this.grid = new int[rows][cols];
             generarLaberinto();
         }
@@ -418,24 +424,37 @@ public class AventuraDelTesoroGUI extends JFrame {
             // Dibujar el jugador
             g.setColor(Color.RED);
             g.fillRect(playerX, playerY, cellSize, cellSize);
-
+    
             // Dibujar la posición final
             g.setColor(Color.GREEN);
             g.fillRect(end.y * cellSize, end.x * cellSize, cellSize, cellSize);
         }
-
+    
         public boolean isWalkable(int x, int y) {
             int gridX = x / cellSize;
             int gridY = y / cellSize;
             return gridX >= 0 && gridX < cols && gridY >= 0 && gridY < rows && grid[gridY][gridX] == 0;
         }
-
+    
         @Override
         public Dimension getPreferredSize() {
             return new Dimension(cols * cellSize, rows * cellSize);
         }
-    }
     
+        public void expand() {
+            // Incrementar el número de filas y columnas
+            rows += rowIncrement;
+            cols += colIncrement;
+    
+            // Crear un nuevo laberinto con el nuevo tamaño
+            grid = new int[rows][cols];
+            generarLaberinto();
+    
+            // Actualizar la interfaz gráfica
+            revalidate();
+            repaint();
+        }
+    }
     private void moverJugador() {
         int step = 5; // Tamaño del paso para el movimiento continuo
     
@@ -472,21 +491,20 @@ public class AventuraDelTesoroGUI extends JFrame {
     
         // Verificar si el jugador ha llegado al final
         if (playerX / cellSize == laberinto.end.y && playerY / cellSize == laberinto.end.x) {
-            timer.stop();
             JOptionPane.showMessageDialog(AventuraDelTesoroGUI.this, "¡Felicidades! Has encontrado el tesoro.");
-                // Generar un nuevo laberinto (mapa)
-        panelJuego.remove(laberinto); // Remove the old maze from the panel
-        laberinto = new Laberinto(numRows, numCols, cellSize); // Create a new maze
-        panelJuego.add(laberinto, BorderLayout.CENTER); // Add the new maze to the panel
-
-        // Transportar al jugador al nuevo mapa (posición inicial)
-        playerX = 0;
-        playerY = 0;
-
-        // Actualizar la interfaz gráfica
-        panelJuego.revalidate(); // Refresh the panel
-        panelJuego.repaint(); // Repaint the panel
-
+            
+            // Generar un nuevo laberinto (mapa)
+            panelJuego.remove(laberinto); // Remove the old maze from the panel
+            laberinto = new Laberinto(numRows, numCols, cellSize); // Create a new maze
+            panelJuego.add(laberinto, BorderLayout.CENTER); // Add the new maze to the panel
+    
+            // Transportar al jugador al nuevo mapa (posición inicial)
+            playerX = 0;
+            playerY = 0;
+    
+            // Actualizar la interfaz gráfica
+            panelJuego.revalidate(); // Refresh the panel
+            panelJuego.repaint(); // Repaint the panel
         }
     }
     
