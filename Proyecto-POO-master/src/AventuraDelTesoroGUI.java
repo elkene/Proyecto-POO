@@ -8,15 +8,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Stack;
-import javax.swing.Timer;
-
 
 public class AventuraDelTesoroGUI extends JFrame {
-    private List<String> jugadores = new ArrayList<>();
+    private List<JugadorPersistible> jugadores = new ArrayList<>();
     private String archivoJugadores = "data/jugadores.txt";
     private String archivoScoreboard = "data/scoreboard.txt";
     private CardLayout cardLayout;
-    private String nombreJugadorSeleccionado;
+    private JugadorPersistible jugadorSeleccionado;
     private JPanel panelPrincipal;
     private JPanel panelMenu;
     private JPanel panelJuego;
@@ -128,7 +126,7 @@ public class AventuraDelTesoroGUI extends JFrame {
             public void actionPerformed(ActionEvent e) {
                 String nombreJugador = JOptionPane.showInputDialog(AventuraDelTesoroGUI.this, "Introduce tu nombre:");
                 if (nombreJugador != null && !nombreJugador.isEmpty()) {
-                    jugadores.add(nombreJugador);
+                    jugadores.add(new JugadorPersistible(nombreJugador));
                     JOptionPane.showMessageDialog(AventuraDelTesoroGUI.this, "Jugador creado: " + nombreJugador);
                     guardarJugadores();
                 } else {
@@ -150,6 +148,7 @@ public class AventuraDelTesoroGUI extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 guardarJugadores();
+                guardarScoreboard();
                 System.exit(0);
             }
         });
@@ -261,7 +260,7 @@ public class AventuraDelTesoroGUI extends JFrame {
         });
 
         // Configuración del temporizador
-        int tiempoInicial = 30; // Tiempo inicial en segundos (5 minutos)
+        int tiempoInicial = 60; // Tiempo inicial en segundos (5 minutos)
         timer = new javax.swing.Timer(1000, new ActionListener() { // Especificar javax.swing.Timer
             int tiempoRestante = tiempoInicial;
 
@@ -351,7 +350,7 @@ public class AventuraDelTesoroGUI extends JFrame {
         try (BufferedReader br = new BufferedReader(new FileReader(archivoJugadores))) {
             String jugador;
             while ((jugador = br.readLine()) != null) {
-                jugadores.add(jugador);
+                jugadores.add(new JugadorPersistible(jugador));
             }
         } catch (IOException e) {
             System.err.println("Error al cargar jugadores: " + e.getMessage());
@@ -360,8 +359,8 @@ public class AventuraDelTesoroGUI extends JFrame {
 
     private void guardarJugadores() {
         try (BufferedWriter bw = new BufferedWriter(new FileWriter(archivoJugadores))) {
-            for (String jugador : jugadores) {
-                bw.write(jugador);
+            for (JugadorPersistible jugador : jugadores) {
+                bw.write(jugador.getNombre());
                 bw.newLine();
             }
         } catch (IOException e) {
@@ -395,13 +394,13 @@ public class AventuraDelTesoroGUI extends JFrame {
     }
 
     private void actualizarScoreboard() {
-        if (scoreboard.containsKey(nombreJugadorSeleccionado)) {
-            int puntuacionAnterior = scoreboard.get(nombreJugadorSeleccionado);
+        if (scoreboard.containsKey(jugadorSeleccionado.getNombre())) {
+            int puntuacionAnterior = scoreboard.get(jugadorSeleccionado.getNombre());
             if (puntuacion > puntuacionAnterior) {
-                scoreboard.put(nombreJugadorSeleccionado, puntuacion);
+                scoreboard.put(jugadorSeleccionado.getNombre(), puntuacion);
             }
         } else {
-            scoreboard.put(nombreJugadorSeleccionado, puntuacion);
+            scoreboard.put(jugadorSeleccionado.getNombre(), puntuacion);
         }
     }
 
@@ -427,8 +426,8 @@ public class AventuraDelTesoroGUI extends JFrame {
             GridBagConstraints gbc = new GridBagConstraints();
 
             // Lista de jugadores
-            JComboBox<String> jugadorComboBox = new JComboBox<>();
-            for (String jugador : jugadores) {
+            JComboBox<JugadorPersistible> jugadorComboBox = new JComboBox<>();
+            for (JugadorPersistible jugador : jugadores) {
                 jugadorComboBox.addItem(jugador);
             }
             gbc.gridx = 0;
@@ -440,8 +439,8 @@ public class AventuraDelTesoroGUI extends JFrame {
             btnSeleccionar.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    nombreJugadorSeleccionado = (String) jugadorComboBox.getSelectedItem();
-                    JOptionPane.showMessageDialog(SeleccionJugadorFrame.this, "Seleccionaste a " + nombreJugadorSeleccionado);
+                    jugadorSeleccionado = (JugadorPersistible) jugadorComboBox.getSelectedItem();
+                    JOptionPane.showMessageDialog(SeleccionJugadorFrame.this, "Seleccionaste a " + jugadorSeleccionado.getNombre());
                     iniciarJuego();
                 }
             });
@@ -465,7 +464,7 @@ public class AventuraDelTesoroGUI extends JFrame {
         private void iniciarJuego() {
             // Aquí puedes agregar la lógica para iniciar el juego con el jugador seleccionado
             puntuacion = 0; // Reiniciar la puntuación
-            JOptionPane.showMessageDialog(SeleccionJugadorFrame.this, "Iniciando juego para " + nombreJugadorSeleccionado);
+            JOptionPane.showMessageDialog(SeleccionJugadorFrame.this, "Iniciando juego para " + jugadorSeleccionado.getNombre());
             cardLayout.show(panelPrincipal, "Juego");
             timer.start();
             panelJuego.requestFocusInWindow();
@@ -718,6 +717,44 @@ public class AventuraDelTesoroGUI extends JFrame {
             return null;
         }
         return new ImageIcon(fileName).getImage();
+    }
+
+    public class Jugador {
+        private String nombre;
+    
+        public Jugador(String nombre) {
+            this.nombre = nombre;
+        }
+    
+        public String getNombre() {
+            return nombre;
+        }
+    
+        @Override
+        public String toString() {
+            return nombre;
+        }
+    }
+
+    public interface Persistible {
+        void guardar(String archivo);
+        void cargar(String archivo);
+    }
+    
+    public class JugadorPersistible extends Jugador implements Persistible {
+        public JugadorPersistible(String nombre) {
+            super(nombre);
+        }
+
+        @Override
+        public void guardar(String archivo) {
+            // Código para guardar el jugador en un archivo
+        }
+
+        @Override
+        public void cargar(String archivo) {
+            // Código para cargar el jugador desde un archivo
+        }
     }
 
     public static void main(String[] args) {
