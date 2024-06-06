@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Random;
 import java.util.Stack;
 
-
 public class AventuraDelTesoroGUI extends JFrame {
     private List<String> jugadores = new ArrayList<>();
     private String nombreJugadorSeleccionado;
@@ -28,34 +27,34 @@ public class AventuraDelTesoroGUI extends JFrame {
 
     public AventuraDelTesoroGUI() {
         cargarJugadores();
-    
+
         setTitle("Aventura del Tesoro");
         setSize(800, 600);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-    
+
         cardLayout = new CardLayout();
         panelPrincipal = new JPanel(cardLayout);
-    
+
         // Crear el menú principal con GIF de fondo
         panelMenu = new JPanel(new GridBagLayout()) {
             @Override
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
-                ImageIcon fondo = new ImageIcon("fondo3.gif");
+                ImageIcon fondo = new ImageIcon("C:\\Users\\usuario\\Desktop\\JAVA\\Proyecto-POO-master\\fondo.jpg");
                 g.drawImage(fondo.getImage(), 0, 0, getWidth(), getHeight(), this);
             }
         };
-    
+
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(10, 10, 10, 10);
         gbc.gridx = 0;
         gbc.gridy = 0;
-    
+
         // Estilo personalizado para los botones
         Font botonFont = new Font("Arial", Font.PLAIN, 20); // Cambiar el tamaño de la fuente de los botones
         Color colorBoton = new Color(255, 255, 255); // Color blanco para el fondo de los botones
         Color colorTexto = new Color(0, 0, 0); // Color negro para el texto de los botones
-    
+
         // Botón para iniciar el juego
         JButton btnIniciar = new JButton("Iniciar juego");
         btnIniciar.setFont(botonFont);
@@ -75,7 +74,7 @@ public class AventuraDelTesoroGUI extends JFrame {
             }
         });
         panelMenu.add(btnIniciar, gbc);
-    
+
         // Botón para ver el scoreboard
         JButton btnScoreboard = new JButton("Ver scoreboard");
         btnScoreboard.setFont(botonFont);
@@ -91,7 +90,7 @@ public class AventuraDelTesoroGUI extends JFrame {
         });
         gbc.gridy = 1;
         panelMenu.add(btnScoreboard, gbc);
-    
+
         // Botón para crear nuevo jugador
         JButton btnNuevoJugador = new JButton("Crear nuevo jugador");
         btnNuevoJugador.setFont(botonFont);
@@ -114,7 +113,7 @@ public class AventuraDelTesoroGUI extends JFrame {
         });
         gbc.gridy = 2;
         panelMenu.add(btnNuevoJugador, gbc);
-    
+
         // Botón para salir del juego
         JButton btnSalir = new JButton("Salir");
         btnSalir.setFont(botonFont);
@@ -131,36 +130,37 @@ public class AventuraDelTesoroGUI extends JFrame {
         });
         gbc.gridy = 3;
         panelMenu.add(btnSalir, gbc);
+
+       // Crear el panel del juego
+       panelJuego = new JPanel(new BorderLayout());
     
-        // Crear el panel del juego
-        panelJuego = new JPanel(new BorderLayout());
-    
-        // Panel para mostrar el mapa
-        laberinto = new Laberinto(numRows, numCols, cellSize);
-        panelJuego.add(laberinto, BorderLayout.CENTER); // Centrar el laberinto en el panel
-    
-        // Temporizador
-        lblTemporizador = new JLabel("Tiempo restante: 60 segundos");
-        panelJuego.add(lblTemporizador, BorderLayout.NORTH);
-    
+       // Panel para mostrar el mapa
+       laberinto = new Laberinto(numRows, numCols, cellSize);
+       panelJuego.add(laberinto, BorderLayout.CENTER); // Centrar el laberinto en el panel
+   
+       // Temporizador
+       lblTemporizador = new JLabel("Tiempo restante: ");
+       panelJuego.add(lblTemporizador, BorderLayout.NORTH);
+
         // Indicadores de movimiento
         lblArriba = new JLabel("↑");
         lblAbajo = new JLabel("↓");
         lblIzquierda = new JLabel("←");
         lblDerecha = new JLabel("→");
-    
+
         Font flechaFont = new Font("Arial", Font.PLAIN, 40); // Cambiar el tamaño de la fuente
         lblArriba.setFont(flechaFont);
         lblAbajo.setFont(flechaFont);
         lblIzquierda.setFont(flechaFont);
         lblDerecha.setFont(flechaFont);
-    
+
         // Centrar las etiquetas de flechas horizontalmente
         lblArriba.setHorizontalAlignment(SwingConstants.CENTER);
         lblAbajo.setHorizontalAlignment(SwingConstants.CENTER);
         lblIzquierda.setHorizontalAlignment(SwingConstants.CENTER);
         lblDerecha.setHorizontalAlignment(SwingConstants.CENTER);
-    
+
+       
         JPanel panelIndicadores = new JPanel();
         panelIndicadores.setLayout(new GridLayout(3, 3));
         panelIndicadores.add(new JPanel()); // Celda vacía
@@ -285,7 +285,7 @@ public class AventuraDelTesoroGUI extends JFrame {
             setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
             // Crear un JLabel para el GIF de fondo
-            JLabel background = new JLabel(new ImageIcon("fondoo.gif"));
+            JLabel background = new JLabel(new ImageIcon("C:\\Users\\usuario\\Desktop\\JAVA\\Proyecto-POO-master\\fondoo.gif"));
             setContentPane(background);
             setLayout(new GridBagLayout());
             GridBagConstraints gbc = new GridBagConstraints();
@@ -492,25 +492,21 @@ public class AventuraDelTesoroGUI extends JFrame {
         // Verificar si el jugador ha llegado al final
         if (playerX / cellSize == laberinto.end.y && playerY / cellSize == laberinto.end.x) {
             JOptionPane.showMessageDialog(AventuraDelTesoroGUI.this, "¡Felicidades! Has encontrado el tesoro.");
-            
+        
             // Generar un nuevo laberinto (mapa)
             panelJuego.remove(laberinto); // Remove the old maze from the panel
-            laberinto = new Laberinto(numRows, numCols, cellSize); // Create a new maze
+            laberinto.expand(); // Expand the maze
             panelJuego.add(laberinto, BorderLayout.CENTER); // Add the new maze to the panel
-    
+        
             // Transportar al jugador al nuevo mapa (posición inicial)
             playerX = 0;
             playerY = 0;
-    
+        
             // Actualizar la interfaz gráfica
             panelJuego.revalidate(); // Refresh the panel
             panelJuego.repaint(); // Repaint the panel
         }
     }
-    
-    
-    
-
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             AventuraDelTesoroGUI juego = new AventuraDelTesoroGUI();
